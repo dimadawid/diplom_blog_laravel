@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+    web:
+        container_name: web-books
+        image: nginx:latest
+        ports:
+            - "${NGINX_PORT:-80}:80"
+        volumes:
+            - ./:/var/www/html
+            - "./docker/web/default.conf:/etc/nginx/conf.d/default.conf"
+        links:
+            - php-fpm
+            - mysql
+
+    php-fpm:
+        container_name: php-books
+        build:
+            dockerfile: docker/php/Dockerfile
+            context: .
+        volumes:
+            - ./:/var/www/html
+        links:
+            - mysql
+
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+    mysql:
+        container_name: db-books
+        image: mariadb:10.3
+        env_file:
+            - .env
+        ports:
+            - "${DOCKER_DB_PORT:-3306}:3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+            - MYSQL_DATABASE=books
+
